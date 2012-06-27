@@ -60,9 +60,40 @@ def set_uniques(rows, uniques, c):
         uniques[i][col] +=1
     yield r
 
+def print_summary(output_file, row_count, types, uniques, col_names, c, start_time):
+  output = ""
+  
+  output += ">>> FILE SUMMARY <<<\n"
+  output += "Total rows: " + locale.format("%d", row_count, grouping=True) + "\n\n"
+  
+  # for each column print info
+  for i, (type_items, unique_items) in enumerate(zip(types.values(), uniques.values())):
+    if col_names:
+      col_index = c if c else i
+      output += "Column %s [%d]:\n" % (col_names[col_index], col_index,)
+    else:
+      output += "Column %d:\n" % (i,)
+    
+    output += "  Value types:\n"
+    for t, n in type_items.items():
+      output += "\t>>> %s: %d\n" % (t, n)
+    
+    output += "  Unique elements: %d\n" % (len(unique_items.keys()),)
+    if (len(unique_items.keys()) < 50):
+      for u, n in unique_items.items():
+        output += "\t>>> %s: %d\n" % (u, n)
+  
+  output += "\nTime to read file: %0.2f minutes\n" % ((time.time() - start_time) / 60.0,)
+  
+  if output_file:
+    output_file = file(output_file, "wb")
+    output_file.write(output)
+  else:
+    print output
+
 # f = file, c = column, d = delimiter, s = num of rows to skip
 # v = verobse
-def analyze(f, c, d, s, v):
+def analyze(f, c, d, s, o, v):
   types = defaultdict(lambda: defaultdict(int))
   uniques = defaultdict(lambda: defaultdict(int))
   col_names = None
@@ -104,34 +135,7 @@ def analyze(f, c, d, s, v):
   # get total number of rows
   row_count = reduce(lambda a, b: a+1, all_rows, 0)
   
-  ############
-  # print summary
-  print "\n>>> FILE SUMMARY <<<"
-  print "Total rows: " + locale.format("%d", row_count, grouping=True)
-  print ""
-  
-  # for each column print info
-  for i, (type_items, unique_items) in enumerate(zip(types.values(), uniques.values())):
-    if col_names:
-      col_index = c if c else i
-      print "Column %s [%d]:" % (col_names[col_index], col_index,)
-    else:
-      print "Column %d:" % (i,)
-    
-    print "  Value types:"
-    for t, n in type_items.items():
-      print "\t>>> %s: %d" % (t, n)
-    
-    print "  Unique elements: %d" % (len(unique_items.keys()),)
-    if (len(unique_items.keys()) < 50):
-      for u, n in unique_items.items():
-        print "\t>>> %s: %d" % (u, n)
-    
-    print ""
-  
-  print "Time to read file: %0.2f minutes" % ((time.time() - start) / 60.0,)
-  print ""
-  
+  print_summary(o, row_count, types, uniques, col_names, c, start)
 
 def usage():
   print "\n>>> USAGE <<<\n"
@@ -153,13 +157,13 @@ def main(file_path, argv):
     usage()
     sys.exit()
   try:
-    opts, args = getopt.getopt(argv, "h:c:d:s:v", ["help", "column=", "delimiter", "skip", "verbose"])
+    opts, args = getopt.getopt(argv, "h:c:d:s:o:v", ["help", "column=", "delimiter", "skip", "output", "verbose"])
   except getopt.GetoptError:
     usage()
     sys.exit(2)
     # todo: print error/usage info
   # set up defaults
-  column, delimiter, skip, verbose = None, "','", 0, False
+  column, delimiter, skip, output, verbose = None, "','", 0, None, False
   for opt, arg in opts:
     if opt in ("-h", "--help"):
       usage()
@@ -167,6 +171,8 @@ def main(file_path, argv):
       column = int(arg)
     elif opt in ("-d", "--delimiter"):
       delimiter = arg
+    elif opt in ("-o", "--output"):
+      output = arg
     elif opt in ("-s", "--skip"):
       skip = int(arg)
     elif opt in("-v", "--verbose"):
@@ -175,7 +181,7 @@ def main(file_path, argv):
   print "Running analysis..."
   
   # get unique types...
-  analyze(file_path, column, delimiter, skip, verbose)
+  analyze(file_path, column, delimiter, skip, output, verbose)
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
