@@ -113,7 +113,8 @@ def analyze(f, c, d, s, v):
   # for each column print info
   for i, (type_items, unique_items) in enumerate(zip(types.values(), uniques.values())):
     if col_names:
-      print "Column %s [%d]:" % (col_names[c], c,)
+      col_index = c if c else i
+      print "Column %s [%d]:" % (col_names[col_index], col_index,)
     else:
       print "Column %d:" % (i,)
     
