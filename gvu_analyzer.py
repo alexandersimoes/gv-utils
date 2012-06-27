@@ -91,7 +91,7 @@ def analyze(f, c, d, s, v):
   else:
     all_rows = (line for line in csv_reader)
   
-  # 
+  # if verbose flag set show progress in reading file
   if v:
     all_rows = output_verbose(all_rows)
   
@@ -152,13 +152,13 @@ def main(file_path, argv):
     usage()
     sys.exit()
   try:
-    opts, args = getopt.getopt(argv, "h:c:o:t:d:s:v", ["help", "column=", "output", "type", "delimiter", "skip", "verbose"])
+    opts, args = getopt.getopt(argv, "h:c:d:s:v", ["help", "column=", "delimiter", "skip", "verbose"])
   except getopt.GetoptError:
     usage()
     sys.exit(2)
     # todo: print error/usage info
   # set up defaults
-  column, type, delimiter, skip, verbose = None, "string", "','", 0, False
+  column, delimiter, skip, verbose = None, "','", 0, False
   for opt, arg in opts:
     if opt in ("-h", "--help"):
       usage()
@@ -175,8 +175,6 @@ def main(file_path, argv):
   
   # get unique types...
   analyze(file_path, column, delimiter, skip, verbose)
-
-  # output_distributions(file_path, column, output, delimiter, skip)
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
