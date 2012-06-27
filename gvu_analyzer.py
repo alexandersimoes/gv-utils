@@ -102,7 +102,7 @@ def analyze(f, c, d, s, o, v):
   start = time.time()
   
   # open input file
-  input_file = open(f, 'rb');
+  input_file = open(f, 'rU');
   
   # CSV library to sparate file into rows
   # much easier than writing all exceptions from scratch
