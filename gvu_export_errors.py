@@ -8,36 +8,29 @@ except locale.Error:
 
 # given a string find out the type
 def get_type(x):
+  types = []
+  if x == '0' or x == 0:
+    types.append("zero")
+    types.append("float")
   if x == '' or x == None:
-    return "Empty"
+    types.append("empty")
   x = str(x)
   x = x.replace(",", ".")
   try:
     int(x)
-    return "Int"
+    types.append("int")
   except ValueError:
     try:
       float(x)
-      return "Float"
+      types.append("float")
     except ValueError:
-      return "String"
+      types.append("string")
+  return types
 
 def filter_type(rows, t):
-  for r in rows:
-    if get_type(r).lower() == t.lower():
-      yield r
-
-def trim_to_cols(rows, c):
-  if isinstance(c, int):
-    for r in rows:
-      yield r[c]
-  elif isinstance(c, list):
-    for r in rows:
-      new_r = [r[int(col_index)] for col_index in c]
-      yield new_r
-  else:
-    for r in rows:
-      yield r
+  for i, r in enumerate(rows):
+    if not bool(set(t) & set(get_type(r))):
+      yield (str(i+1), r, "|".join(get_type(r)))
 
 # generator function to output progress of reading file
 def output_verbose(rows):
@@ -52,7 +45,7 @@ def output_verbose(rows):
       print locale.format("%d", i, grouping=True) + " rows read"
     yield r
 
-def output_data(f, c, o, t, d, s, v):
+def output_errors(f, c, o, t, d, s, v):
   # calculate running time
   start = time.time()
   
@@ -68,29 +61,28 @@ def output_data(f, c, o, t, d, s, v):
     csv_reader.next()
     s -= 1
   
-  # if user specifies only one column remove the rest of the data
-  all_rows = trim_to_cols(csv_reader, c)
+  # use the column specified by user
+  all_rows = (line[c].strip() for line in csv_reader)
   
   # if verbose flag set show progress in reading file
   if v:
     all_rows = output_verbose(all_rows)
   
-  # strip out unselected types (string, zero, empty, int or float)
-  if isinstance(c, int):
-    all_rows = filter_type(all_rows, t)
+  # find rows that are not of specified types
+  # (string, zero, empty, int or float)
+  all_rows = filter_type(all_rows, t)
   
   # print output to file...
   if o:
-    file_to_write = open(o, "wb")
-    for r in all_rows:
-      if isinstance(r, list):
-        file_to_write.write(", ".join(r)+"\n")
-      else:
-        file_to_write.write(r+"\n")
+    row_header = ["line_number", "erroneous_value", "discovered_type"]
+    file_to_write = csv.writer(open(o, 'wb'), delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    file_to_write.writerow(row_header)
+    file_to_write.writerows(all_rows)
   # print to console
   else:
     for r in all_rows:
-      print r
+      print ", ".join(r)
 
 def main(file_path, argv):
   # test if file is help
@@ -102,21 +94,22 @@ def main(file_path, argv):
   except getopt.GetoptError:
     usage()
     sys.exit(2)
-    # todo: print error/usage info
   # set up defaults
   columns, output, type, delimiter, skip, verbose = None, None, "string", "','", 0, False
   for opt, arg in opts:
     if opt in ("-h", "--help"):
       usage()
     if opt in ("-c", "--columns"):
-      if "," in arg:
-        columns = arg.split(",")
-      else:
-        columns = int(arg)
+      columns = int(arg)
     elif opt in ("-d", "--delimiter"):
       delimiter = arg
     elif opt in ("-t", "--type"):
-      type = arg
+      if arg == "number":
+        type = ["int", "float"]
+      elif "," in arg:
+        type = arg.split(",")
+      else:
+        type = [arg]
     elif opt in ("-o", "--output"):
       output = arg
     elif opt in ("-s", "--skip"):
@@ -125,7 +118,7 @@ def main(file_path, argv):
       verbose = True
   
   # get unique types...
-  output_data(file_path, columns, output, type, delimiter, skip, verbose)
+  output_errors(file_path, columns, output, type, delimiter, skip, verbose)
 
 
 if __name__ == "__main__":
