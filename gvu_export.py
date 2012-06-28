@@ -8,24 +8,32 @@ except locale.Error:
 
 # given a string find out the type
 def get_type(x):
+  types = []
+  if x == '0' or x == 0:
+    types.append("zero")
+    types.append("float")
   if x == '' or x == None:
-    return "Empty"
+    types.append("empty")
   x = str(x)
   x = x.replace(",", ".")
   try:
     int(x)
-    return "Int"
+    types.append("int")
   except ValueError:
     try:
       float(x)
-      return "Float"
+      types.append("float")
     except ValueError:
-      return "String"
+      types.append("string")
+  return types
 
 def filter_type(rows, t):
   for r in rows:
-    if get_type(r).lower() == t.lower():
-      yield r
+    if bool(set(t) & set(get_type(r))):
+      if not bool(set(t) & set(["string"])):
+        yield r.replace(",", ".")
+      else:
+        yield r
 
 def trim_to_cols(rows, c):
   if isinstance(c, int):
@@ -116,7 +124,12 @@ def main(file_path, argv):
     elif opt in ("-d", "--delimiter"):
       delimiter = arg
     elif opt in ("-t", "--type"):
-      type = arg
+      if arg == "number":
+        type = ["int", "float"]
+      elif "," in arg:
+        type = arg.split(",")
+      else:
+        type = [arg]
     elif opt in ("-o", "--output"):
       output = arg
     elif opt in ("-s", "--skip"):
