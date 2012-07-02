@@ -66,10 +66,10 @@ def print_summary(output_file, row_count, types, uniques, col_names, c, start_ti
   output += ">>> FILE SUMMARY <<<\n"
   output += "Total rows: " + locale.format("%d", row_count, grouping=True) + "\n\n"
   
-  # for each column print info
   for i, (type_items, unique_items) in enumerate(zip(types.values(), uniques.values())):
     if col_names:
       col_index = c if c else i
+      # print col_index
       output += "Column %s [%d]:\n" % (col_names[col_index], col_index,)
     else:
       output += "Column %d:\n" % (i,)

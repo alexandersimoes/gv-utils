@@ -37,8 +37,12 @@ def filter_type(rows, t):
 
 def trim_to_cols(rows, c):
   if isinstance(c, int):
-    for r in rows:
-      yield r[c]
+    for i, r in enumerate(rows):
+      try:
+        yield r[c]
+      except:
+        print "row %d skipped" % (i)
+        print r
   elif isinstance(c, list):
     for r in rows:
       new_r = [r[int(col_index)] for col_index in c]
@@ -65,7 +69,7 @@ def output_data(f, c, o, t, d, s, v):
   start = time.time()
   
   # open input file
-  input_file = open(f, 'rb');
+  input_file = open(f, 'rU');
   
   # CSV library to sparate file into rows
   # much easier than writing all exceptions from scratch
