@@ -64,7 +64,7 @@ def output_verbose(rows):
       print locale.format("%d", i, grouping=True) + " rows read"
     yield r
 
-def output_data(f, c, o, t, d, s, v, od):
+def output_data(f, c, o, t, d, s, v):
   # calculate running time
   start = time.time()
   
@@ -96,7 +96,7 @@ def output_data(f, c, o, t, d, s, v, od):
     file_to_write = open(o, "wb")
     for r in all_rows:
       if isinstance(r, list):
-        file_to_write.write(od.join(r)+"\n")
+        file_to_write.write("\t".join(r)+"\n")
       else:
         file_to_write.write(r+"\n")
   # print to console
@@ -110,13 +110,13 @@ def main(file_path, argv):
     usage()
     sys.exit()
   try:
-    opts, args = getopt.getopt(argv, "h:c:o:t:d:s:od:v", ["help", "columns=", "output", "type", "delimiter", "skip", "output-delimiter", "verbose"])
+    opts, args = getopt.getopt(argv, "h:c:o:t:d:s:v", ["help", "columns=", "output", "type", "delimiter", "skip", "verbose"])
   except getopt.GetoptError:
     usage()
     sys.exit(2)
     # todo: print error/usage info
   # set up defaults
-  columns, output, type, delimiter, skip, verbose, output_delimiter = None, None, "string", "','", 0, False, ","
+  columns, output, type, delimiter, skip, verbose = None, None, "string", "','", 0, False
   for opt, arg in opts:
     if opt in ("-h", "--help"):
       usage()
@@ -136,15 +136,13 @@ def main(file_path, argv):
         type = [arg]
     elif opt in ("-o", "--output"):
       output = arg
-    elif opt in ("-od", "--output-delimiter"):
-      output_delimiter = arg
     elif opt in ("-s", "--skip"):
       skip = int(arg)
     elif opt in("-v", "--verbose"):
       verbose = True
   
   # get unique types...
-  output_data(file_path, columns, output, type, delimiter, skip, verbose, output_delimiter)
+  output_data(file_path, columns, output, type, delimiter, skip, verbose)
 
 
 if __name__ == "__main__":
